@@ -4,441 +4,461 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Return to Source Calculator</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #0a0a0f; color: #e8e4d9; font-family: 'DM Mono', 'Courier New', monospace; }
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: #111; }
-::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 3px; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0f;color:#e8e4d9;font-family:'Courier New',monospace;padding:28px 24px;min-height:100vh}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:#111}
+::-webkit-scrollbar-thumb{background:#2a2a3a;border-radius:3px}
+h1{font-size:26px;font-weight:800;letter-spacing:-0.02em;margin-bottom:4px}
+h1 span{color:#4ade80}
+.sub{color:#333;font-size:11px;letter-spacing:.1em;margin-bottom:32px}
+.info-box{background:#0e0e18;border:1px solid #1a1a2a;border-radius:8px;padding:14px 18px;margin-bottom:24px}
+.info-box .title{color:#fbbf24;font-size:11px;margin-bottom:8px;letter-spacing:.06em}
+.info-box p{color:#555;font-size:11px;line-height:1.9}
+.info-box strong{color:#888}
+.uploads{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.upload-label{font-size:10px;color:#444;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.drop-zone{border:1.5px dashed #1e1e2e;border-radius:8px;padding:18px;cursor:pointer;transition:all .2s;text-align:center;background:#0c0c16;display:block}
+.drop-zone:hover,.drop-zone.active{border-color:#4ade80;background:#0a1a0f}
+.drop-zone input{display:none}
+.drop-zone .hint{color:#333;font-size:12px}
+.drop-zone .filename{color:#4ade80;font-size:12px;margin-bottom:3px}
+.drop-zone .filesize{color:#333;font-size:11px}
+.btn{background:#4ade80;color:#0a0a0f;border:none;padding:11px 26px;border-radius:6px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.05em;transition:all .15s;margin-bottom:28px}
+.btn:hover{background:#86efac}
+.btn:disabled{background:#112211;color:#2a4a2a;cursor:not-allowed}
+.error{background:#150808;border:1px solid #7f1d1d;border-radius:8px;padding:14px;margin-bottom:20px;color:#f87171;font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:28px}
+.stat-box{background:#0e0e18;border:1px solid #141422;border-radius:8px;padding:14px 18px}
+.stat-box .slabel{color:#333;font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.stat-box .sval{font-size:18px;font-weight:500;font-variant-numeric:tabular-nums}
+.tabs{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #141422;margin-bottom:20px}
+.tab{padding:8px 14px;border:none;background:none;color:#444;cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border-bottom:2px solid transparent;transition:all .2s}
+.tab.active{color:#4ade80;border-bottom-color:#4ade80}
+.tab:hover{color:#e8e4d9}
+.search{background:#0e0e18;border:1px solid #1a1a2a;border-radius:6px;padding:8px 12px;color:#e8e4d9;font-family:inherit;font-size:12px;width:260px;outline:none}
+.search:focus{border-color:#4ade80}
+.table-wrap{overflow-x:auto;max-height:60vh;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px 12px;color:#555;font-weight:400;letter-spacing:.08em;text-transform:uppercase;font-size:10px;border-bottom:1px solid #141422;position:sticky;top:0;background:#0a0a0f;z-index:1}
+td{padding:7px 12px;border-bottom:1px solid #0e0e16;vertical-align:middle}
+tr:hover td{background:#0c0c18}
+.nr{text-align:right;font-variant-numeric:tabular-nums}
+.pos{color:#4ade80}.neg{color:#f87171}.zer{color:#555}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;letter-spacing:.04em}
+.pill-g{background:#0d2a18;color:#4ade80;border:1px solid #166534}
+.pill-r{background:#2a0d0d;color:#f87171;border:1px solid #7f1d1d}
+.pill-y{background:#2a220d;color:#fbbf24;border:1px solid #78350f}
+.pill-s{background:#111;color:#333;border:1px solid #1a1a1a}
+.note-row{background:#0e0e18;border:1px solid #141422;border-radius:6px;padding:10px 14px;margin-bottom:8px;font-size:11px;color:#7c6fcd;line-height:1.6}
+.empty{color:#333;padding:32px;text-align:center;font-size:12px}
+.placeholder{text-align:center;padding:60px 0;color:#1a1a2a}
+.placeholder .icon{font-size:40px;margin-bottom:12px}
+.placeholder .ptxt{font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+#results-panel,#profit-panel,#notes-panel,#unmatched-panel{display:none}
 </style>
 </head>
 <body>
-<div id="root"></div>
-<script type="text/babel">
-const { useState, useCallback } = React;
 
+<h1>Return to Source <span>Calculator</span></h1>
+<p class="sub">DEPOSIT · WITHDRAWAL · EXACT PSP ATTRIBUTION</p>
+
+<div class="info-box">
+  <div class="title">ℹ HOW TO GET THE WITHDRAWAL SHEET CSV</div>
+  <p>
+    1. Open the <strong>RTS Feed</strong> Google Sheet → go to <strong>Sheet2</strong><br/>
+    2. Click <strong>File → Download → Comma Separated Values (.csv)</strong><br/>
+    3. Upload that file below as the Withdrawal Sheet
+  </p>
+</div>
+
+<div class="uploads">
+  <div>
+    <div class="upload-label">Main Transactions CSV</div>
+    <label class="drop-zone" id="dz1">
+      <input type="file" accept=".csv" id="mainFile"/>
+      <div id="dz1-content"><div class="hint">Drop CRM export CSV or click to browse</div></div>
+    </label>
+  </div>
+  <div>
+    <div class="upload-label">Withdrawal Sheet CSV</div>
+    <label class="drop-zone" id="dz2">
+      <input type="file" accept=".csv" id="wdFile"/>
+      <div id="dz2-content"><div class="hint">Download Sheet2 from RTS Feed Google Sheet</div></div>
+    </label>
+  </div>
+</div>
+
+<button class="btn" id="processBtn" disabled>Process</button>
+
+<div class="error" id="errorBox" style="display:none"></div>
+
+<div id="statsBox" style="display:none">
+  <div class="stats">
+    <div class="stat-box"><div class="slabel">Total Deposited</div><div class="sval" id="sTotalDep" style="color:#4ade80"></div></div>
+    <div class="stat-box"><div class="slabel">Total Withdrawn</div><div class="sval" id="sTotalWd" style="color:#f87171"></div></div>
+    <div class="stat-box"><div class="slabel">Net Remaining</div><div class="sval" id="sNet"></div></div>
+    <div class="stat-box"><div class="slabel">Clients</div><div class="sval" id="sClients" style="color:#60a5fa"></div></div>
+  </div>
+
+  <div class="tabs">
+    <div>
+      <button class="tab active" onclick="showTab('results')">Results (<span id="tResults">0</span>)</button>
+      <button class="tab" onclick="showTab('profit')">Profit Payouts (<span id="tProfit">0</span>)</button>
+      <button class="tab" onclick="showTab('notes')">Split Notes (<span id="tNotes">0</span>)</button>
+      <button class="tab" onclick="showTab('unmatched')">Unmatched (<span id="tUnmatched">0</span>)</button>
+    </div>
+    <input class="search" id="searchBox" placeholder="Search client email…" oninput="filterResults()"/>
+  </div>
+
+  <div id="results-panel" class="table-wrap">
+    <table>
+      <thead><tr><th>Client</th><th>Method Group</th><th class="nr">Deposited</th><th class="nr">Withdrawn</th><th class="nr">Balance</th><th>Status</th></tr></thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+  </div>
+
+  <div id="profit-panel">
+    <table>
+      <thead><tr><th>Client</th><th>PSP</th><th class="nr">Amount</th><th>Date</th><th>Note</th></tr></thead>
+      <tbody id="profitBody"></tbody>
+    </table>
+  </div>
+
+  <div id="notes-panel"><div id="notesBody"></div></div>
+
+  <div id="unmatched-panel">
+    <table>
+      <thead><tr><th>ID</th><th>Client</th><th>Method</th><th class="nr">Amount</th><th>Reason</th></tr></thead>
+      <tbody id="unmatchedBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="placeholder" id="placeholder">
+  <div class="icon">⬆</div>
+  <div class="ptxt">Upload both files to begin</div>
+</div>
+
+<script>
 const ACQUIRER_MAP = {
-  jena_pay: "Card (JenaPay)", brightcart: "Card (Brightcart)",
-  pay_maxis: "Card (PayMaxis)", apple_pay_via_pay_maxis: "Apple Pay",
-  google_pay_via_pay_maxis: "Google Pay", confirmo: "Crypto (Confirmo)",
-  bridgerpay: "Crypto (Confirmo)", volet: "Wallet (Volet)", d24: "Form D24",
+  jena_pay:"Card (JenaPay)",brightcart:"Card (Brightcart)",pay_maxis:"Card (PayMaxis)",
+  apple_pay_via_pay_maxis:"Apple Pay",google_pay_via_pay_maxis:"Google Pay",
+  confirmo:"Crypto (Confirmo)",bridgerpay:"Crypto (Confirmo)",volet:"Wallet (Volet)",d24:"Form D24"
 };
-
 const PSP_MAP = {
-  jenapay: "Card (JenaPay)", jena_pay: "Card (JenaPay)", "jena pay": "Card (JenaPay)",
-  brightcart: "Card (Brightcart)", paymaxis: "Card (PayMaxis)",
-  pay_maxis: "Card (PayMaxis)", "pay maxis": "Card (PayMaxis)",
-  coinsbuy: "Crypto (Confirmo)", confirmo: "Crypto (Confirmo)",
-  volet: "Wallet (Volet)", limepay: "Form D24", d24: "Form D24",
-  "brightcart(ellerman)": "Card (Brightcart)", "brightcart (ellerman)": "Card (Brightcart)",
+  jenapay:"Card (JenaPay)",jena_pay:"Card (JenaPay)","jena pay":"Card (JenaPay)",
+  brightcart:"Card (Brightcart)","brightcart(ellerman)":"Card (Brightcart)","brightcart (ellerman)":"Card (Brightcart)",
+  paymaxis:"Card (PayMaxis)",pay_maxis:"Card (PayMaxis)","pay maxis":"Card (PayMaxis)",
+  coinsbuy:"Crypto (Confirmo)",confirmo:"Crypto (Confirmo)",volet:"Wallet (Volet)",
+  limepay:"Form D24",d24:"Form D24"
 };
 
-function normalizePSP(raw) {
-  if (!raw) return null;
-  const key = raw.trim().toLowerCase().replace(/\s+/g, " ");
-  return PSP_MAP[key] || PSP_MAP[key.replace(/\s/g, "_")] || null;
+function normalizePSP(raw){
+  if(!raw)return null;
+  const k=raw.trim().toLowerCase().replace(/\s+/g," ");
+  return PSP_MAP[k]||PSP_MAP[k.replace(/\s/g,"_")]||null;
 }
 
-function parseCSV(text) {
-  const lines = text.split(/\r?\n/).filter(l => l.trim());
-  const rows = [];
-  for (const line of lines) {
-    const cols = []; let cur = "", inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
-      if (c === '"') { inQ = !inQ; }
-      else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ""; }
-      else { cur += c; }
+function parseCSV(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim());
+  const rows=[];
+  for(const line of lines){
+    const cols=[];let cur="",inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){inQ=!inQ;}
+      else if(c===','&&!inQ){cols.push(cur.trim());cur="";}
+      else{cur+=c;}
     }
-    cols.push(cur.trim()); rows.push(cols);
+    cols.push(cur.trim());rows.push(cols);
   }
   return rows;
 }
 
-function parseMainCSV(text) {
-  const rows = parseCSV(text);
-  if (rows.length < 2) return [];
-  const headers = rows[0].map(h => h.replace(/^\uFEFF/, "").trim());
-  const idx = name => headers.findIndex(h => h.toLowerCase() === name.toLowerCase());
-  const I = {
-    id: idx("ID"), user: idx("User"), email: idx("Email"),
-    acquirer: idx("Acquirer"), method: idx("Method"),
-    value: idx("Value in base currency"), type: idx("Type"),
-    success: idx("Success"), payState: idx("Payment state"),
-    tpiState: idx("Tpi state"), gatewayId: idx("Gateway id"), date: idx("Date"),
+function parseMainCSV(text){
+  const rows=parseCSV(text);
+  if(rows.length<2)return[];
+  const headers=rows[0].map(h=>h.replace(/^\uFEFF/,"").trim());
+  const idx=name=>headers.findIndex(h=>h.toLowerCase()===name.toLowerCase());
+  const I={
+    id:idx("ID"),user:idx("User"),email:idx("Email"),acquirer:idx("Acquirer"),method:idx("Method"),
+    value:idx("Value in base currency"),type:idx("Type"),success:idx("Success"),
+    payState:idx("Payment state"),tpiState:idx("Tpi state"),gatewayId:idx("Gateway id"),date:idx("Date")
   };
-  return rows.slice(1).map(r => ({
-    id: r[I.id], user: r[I.user], email: r[I.email],
-    acquirer: (r[I.acquirer] || "").trim().toLowerCase(),
-    method: (r[I.method] || "").trim(),
-    value: parseFloat((r[I.value] || "").replace(/[$,]/g, "")) || 0,
-    type: (r[I.type] || "").trim(),
-    success: (r[I.success] || "").trim(),
-    payState: (r[I.payState] || "").trim(),
-    tpiState: (r[I.tpiState] || "").trim(),
-    gatewayId: (r[I.gatewayId] || "").trim(),
-    date: (r[I.date] || "").trim(),
+  return rows.slice(1).map(r=>({
+    id:r[I.id],user:r[I.user],email:r[I.email],
+    acquirer:(r[I.acquirer]||"").trim().toLowerCase(),
+    method:(r[I.method]||"").trim(),
+    value:parseFloat((r[I.value]||"").replace(/[$,]/g,""))||0,
+    type:(r[I.type]||"").trim(),success:(r[I.success]||"").trim(),
+    payState:(r[I.payState]||"").trim(),tpiState:(r[I.tpiState]||"").trim(),
+    gatewayId:(r[I.gatewayId]||"").trim(),date:(r[I.date]||"").trim()
   }));
 }
 
-function parseMirrorCSV(text) {
-  const rows = parseCSV(text);
-  if (rows.length < 2) return [];
-  const data = [];
-  for (const row of rows.slice(1)) {
-    const rawPid = (row[0] || "").trim();
-    const psp = (row[1] || "").trim();
-    const type = (row[2] || "").trim();
-    if (!rawPid && !psp) continue;
-    const paymentIds = rawPid.split(/[\n,]/).map(s => s.trim()).filter(s => s.length > 5);
-    data.push({ paymentIds: paymentIds.length > 0 ? paymentIds : [rawPid], psp, type });
+function parseMirrorCSV(text){
+  const rows=parseCSV(text);
+  if(rows.length<2)return[];
+  const data=[];
+  for(const row of rows.slice(1)){
+    const rawPid=(row[0]||"").trim();
+    const psp=(row[1]||"").trim();
+    const type=(row[2]||"").trim();
+    if(!rawPid&&!psp)continue;
+    const paymentIds=rawPid.split(/[\n,]/).map(s=>s.trim()).filter(s=>s.length>5);
+    data.push({paymentIds:paymentIds.length>0?paymentIds:[rawPid],psp,type});
   }
   return data;
 }
 
-function process(mainRows, wdRows) {
-  const valid = mainRows.filter(r =>
-    r.success === "True" && r.payState === "Success" && r.tpiState === "Success"
-  );
-  const wdLookup = {};
-  for (const wd of wdRows) {
-    for (const pid of wd.paymentIds) {
-      if (pid) wdLookup[pid.toLowerCase()] = { psp: wd.psp, type: wd.type };
+function fmt(n){
+  return(n<0?"-":"")+"$"+Math.abs(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+let allGrouped={};
+let currentResult=null;
+
+function process(mainRows,wdRows){
+  const valid=mainRows.filter(r=>r.success==="True"&&r.payState==="Success"&&r.tpiState==="Success");
+  const wdLookup={};
+  for(const wd of wdRows){
+    for(const pid of wd.paymentIds){
+      if(pid)wdLookup[pid.toLowerCase()]={psp:wd.psp,type:wd.type};
     }
   }
-  const deposits = valid.filter(r => r.type === "Deposit");
-  const withdrawals = valid.filter(r => r.type === "Withdraw");
-  const clientDeposits = {};
-  for (const d of deposits) {
-    const email = d.email;
-    const group = ACQUIRER_MAP[d.acquirer] || `Unknown (${d.acquirer || "no acquirer"})`;
-    if (!clientDeposits[email]) clientDeposits[email] = {};
-    clientDeposits[email][group] = (clientDeposits[email][group] || 0) + d.value;
+  const deposits=valid.filter(r=>r.type==="Deposit");
+  const withdrawals=valid.filter(r=>r.type==="Withdraw");
+  const clientDeposits={};
+  for(const d of deposits){
+    const email=d.email;
+    const group=ACQUIRER_MAP[d.acquirer]||`Unknown (${d.acquirer||"no acquirer"})`;
+    if(!clientDeposits[email])clientDeposits[email]={};
+    clientDeposits[email][group]=(clientDeposits[email][group]||0)+d.value;
   }
-  const clientWithdrawals = {};
-  const profitPayouts = [];
-  const unmatched = [];
-  const notes = [];
+  const clientWithdrawals={};
+  const profitPayouts=[];
+  const unmatched=[];
+  const notes=[];
 
-  for (const w of withdrawals) {
-    const email = w.email;
-    if (!clientWithdrawals[email]) clientWithdrawals[email] = {};
-    const gwKey = w.gatewayId.toLowerCase();
-    const wdMatch = wdLookup[gwKey];
-    let methodGroup = null;
+  for(const w of withdrawals){
+    const email=w.email;
+    if(!clientWithdrawals[email])clientWithdrawals[email]={};
+    const gwKey=w.gatewayId.toLowerCase();
+    const wdMatch=wdLookup[gwKey];
+    let mg=null;
 
-    if (wdMatch && wdMatch.psp) {
-      if (wdMatch.type === "Profit") {
-        profitPayouts.push({ email, amount: w.value, psp: wdMatch.psp, id: w.id, date: w.date });
-        continue;
-      }
-      methodGroup = normalizePSP(wdMatch.psp);
-      if (methodGroup === "Card (PayMaxis)") {
-        const deps = clientDeposits[email] || {};
-        const apd = deps["Apple Pay"] || 0;
-        const gpd = deps["Google Pay"] || 0;
-        const cpd = deps["Card (PayMaxis)"] || 0;
-        const total = apd + gpd + cpd;
-        if (total > 0 && (apd > 0 || gpd > 0)) {
-          if (apd > 0) clientWithdrawals[email]["Apple Pay"] = (clientWithdrawals[email]["Apple Pay"] || 0) + w.value * (apd / total);
-          if (gpd > 0) clientWithdrawals[email]["Google Pay"] = (clientWithdrawals[email]["Google Pay"] || 0) + w.value * (gpd / total);
-          if (cpd > 0) clientWithdrawals[email]["Card (PayMaxis)"] = (clientWithdrawals[email]["Card (PayMaxis)"] || 0) + w.value * (cpd / total);
+    if(wdMatch&&wdMatch.psp){
+      if(wdMatch.type==="Profit"){profitPayouts.push({email,amount:w.value,psp:wdMatch.psp,id:w.id,date:w.date});continue;}
+      mg=normalizePSP(wdMatch.psp);
+      if(mg==="Card (PayMaxis)"){
+        const deps=clientDeposits[email]||{};
+        const apd=deps["Apple Pay"]||0,gpd=deps["Google Pay"]||0,cpd=deps["Card (PayMaxis)"]||0;
+        const total=apd+gpd+cpd;
+        if(total>0&&(apd>0||gpd>0)){
+          if(apd>0)clientWithdrawals[email]["Apple Pay"]=(clientWithdrawals[email]["Apple Pay"]||0)+w.value*(apd/total);
+          if(gpd>0)clientWithdrawals[email]["Google Pay"]=(clientWithdrawals[email]["Google Pay"]||0)+w.value*(gpd/total);
+          if(cpd>0)clientWithdrawals[email]["Card (PayMaxis)"]=(clientWithdrawals[email]["Card (PayMaxis)"]||0)+w.value*(cpd/total);
           notes.push(`${email}: PayMaxis $${w.value.toFixed(2)} split — Apple Pay ${((apd/total)*100).toFixed(1)}% / Google Pay ${((gpd/total)*100).toFixed(1)}% / Card ${((cpd/total)*100).toFixed(1)}%`);
           continue;
-        } else if (apd > 0 && gpd === 0 && cpd === 0) { methodGroup = "Apple Pay"; }
-        else if (gpd > 0 && apd === 0 && cpd === 0) { methodGroup = "Google Pay"; }
+        }else if(apd>0&&gpd===0&&cpd===0){mg="Apple Pay";}
+        else if(gpd>0&&apd===0&&cpd===0){mg="Google Pay";}
       }
-    } else {
-      const m = w.method.toLowerCase();
-      if (m === "apple pay") methodGroup = "Apple Pay";
-      else if (m === "google pay") methodGroup = "Google Pay";
-      else if (m === "crypto" || m === "bridgerpay") {
-        const deps = clientDeposits[email] || {};
-        if (!(deps["Crypto (Confirmo)"] > 0)) {
-          profitPayouts.push({ email, amount: w.value, psp: "Crypto", id: w.id, date: w.date });
+    }else{
+      const m=w.method.toLowerCase();
+      if(m==="apple pay")mg="Apple Pay";
+      else if(m==="google pay")mg="Google Pay";
+      else if(m==="crypto"||m==="bridgerpay"){
+        const deps=clientDeposits[email]||{};
+        if(!(deps["Crypto (Confirmo)"]>0)){profitPayouts.push({email,amount:w.value,psp:"Crypto",id:w.id,date:w.date});continue;}
+        mg="Crypto (Confirmo)";
+      }
+      else if(m==="volet")mg="Wallet (Volet)";
+      else if(m==="d24")mg="Form D24";
+      else if(m==="credit card"){
+        const deps=clientDeposits[email]||{};
+        const jd=deps["Card (JenaPay)"]||0,bd=deps["Card (Brightcart)"]||0,pd=deps["Card (PayMaxis)"]||0;
+        const total=jd+bd+pd;
+        if(total>0){
+          if(jd>0)clientWithdrawals[email]["Card (JenaPay)"]=(clientWithdrawals[email]["Card (JenaPay)"]||0)+w.value*(jd/total);
+          if(bd>0)clientWithdrawals[email]["Card (Brightcart)"]=(clientWithdrawals[email]["Card (Brightcart)"]||0)+w.value*(bd/total);
+          if(pd>0)clientWithdrawals[email]["Card (PayMaxis)"]=(clientWithdrawals[email]["Card (PayMaxis)"]||0)+w.value*(pd/total);
+          notes.push(`${email}: CC $${w.value.toFixed(2)} split — JenaPay ${((jd/total)*100).toFixed(1)}% / Brightcart ${((bd/total)*100).toFixed(1)}% / PayMaxis ${((pd/total)*100).toFixed(1)}%`);
           continue;
-        }
-        methodGroup = "Crypto (Confirmo)";
-      }
-      else if (m === "volet") methodGroup = "Wallet (Volet)";
-      else if (m === "d24") methodGroup = "Form D24";
-      else if (m === "credit card") {
-        const deps = clientDeposits[email] || {};
-        const jd = deps["Card (JenaPay)"] || 0;
-        const bd = deps["Card (Brightcart)"] || 0;
-        const pd = deps["Card (PayMaxis)"] || 0;
-        const total = jd + bd + pd;
-        if (total > 0) {
-          if (jd > 0) clientWithdrawals[email]["Card (JenaPay)"] = (clientWithdrawals[email]["Card (JenaPay)"] || 0) + w.value * (jd / total);
-          if (bd > 0) clientWithdrawals[email]["Card (Brightcart)"] = (clientWithdrawals[email]["Card (Brightcart)"] || 0) + w.value * (bd / total);
-          if (pd > 0) clientWithdrawals[email]["Card (PayMaxis)"] = (clientWithdrawals[email]["Card (PayMaxis)"] || 0) + w.value * (pd / total);
-          notes.push(`${email}: CC $${w.value.toFixed(2)} split — JenaPay ${((jd/total)*100).toFixed(1)}% / Brightcart ${((bd/total)*100).toFixed(1)}% / PayMaxis ${((pd/total)*100).toFixed(1)}% (no mirror match)`);
-          continue;
-        } else {
-          methodGroup = "Card (JenaPay)";
-          unmatched.push({ ...w, reason: "CC withdrawal, no CC deposits — fallback to JenaPay" });
-        }
-      } else {
-        unmatched.push({ ...w, reason: `No mirror match. Method: "${w.method}"` });
-        continue;
-      }
+        }else{mg="Card (JenaPay)";unmatched.push({...w,reason:"CC withdrawal, no CC deposits — fallback to JenaPay"});}
+      }else{unmatched.push({...w,reason:`No mirror match. Method: "${w.method}"`});continue;}
     }
-    if (methodGroup) {
-      clientWithdrawals[email][methodGroup] = (clientWithdrawals[email][methodGroup] || 0) + w.value;
-    }
+    if(mg)clientWithdrawals[email][mg]=(clientWithdrawals[email][mg]||0)+w.value;
   }
 
-  const allEmails = new Set([...Object.keys(clientDeposits), ...Object.keys(clientWithdrawals)]);
-  const results = [];
-  let totalDep = 0, totalWd = 0;
-  for (const email of allEmails) {
-    const deps = clientDeposits[email] || {};
-    const wds = clientWithdrawals[email] || {};
-    const groups = new Set([...Object.keys(deps), ...Object.keys(wds)]);
-    for (const group of groups) {
-      const dep = deps[group] || 0; const wd = wds[group] || 0;
-      totalDep += dep; totalWd += wd;
-      results.push({ email, group, dep, wd, bal: dep - wd });
+  const allEmails=new Set([...Object.keys(clientDeposits),...Object.keys(clientWithdrawals)]);
+  const results=[];let totalDep=0,totalWd=0;
+  for(const email of allEmails){
+    const deps=clientDeposits[email]||{};
+    const wds=clientWithdrawals[email]||{};
+    const groups=new Set([...Object.keys(deps),...Object.keys(wds)]);
+    for(const group of groups){
+      const dep=deps[group]||0,wd=wds[group]||0;
+      totalDep+=dep;totalWd+=wd;
+      results.push({email,group,dep,wd,bal:dep-wd});
     }
   }
-  return { results, profitPayouts, unmatched, notes, totalDep, totalWd };
+  return{results,profitPayouts,unmatched,notes,totalDep,totalWd};
 }
 
-const fmt = n => (n < 0 ? "-" : "") + "$" + Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// File handling
+let mainText=null,wdText=null;
 
-function App() {
-  const [mainFile, setMainFile] = useState(null);
-  const [wdFile, setWdFile] = useState(null);
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("results");
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const readFile = f => new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = e => res(e.target.result);
-    r.onerror = rej;
-    r.readAsText(f);
+function readFile(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=e=>res(e.target.result);
+    r.onerror=rej;
+    r.readAsText(file);
   });
-
-  const handleProcess = async () => {
-    if (!mainFile || !wdFile) return;
-    setLoading(true); setError(null);
-    try {
-      const [mainText, wdText] = await Promise.all([readFile(mainFile), readFile(wdFile)]);
-      const mainRows = parseMainCSV(mainText);
-      const wdRows = parseMirrorCSV(wdText);
-      if (mainRows.length === 0) throw new Error("Main CSV appears empty or invalid.");
-      if (wdRows.length === 0) throw new Error("Withdrawal sheet CSV appears empty or invalid.");
-      const res = process(mainRows, wdRows);
-      setResult(res); setActiveTab("results");
-    } catch(e) { setError(e.message); }
-    setLoading(false);
-  };
-
-  const grouped = result ? result.results.reduce((acc, row) => {
-    if (!acc[row.email]) acc[row.email] = [];
-    acc[row.email].push(row); return acc;
-  }, {}) : {};
-
-  const filtered = searchTerm
-    ? Object.keys(grouped).filter(e => e.toLowerCase().includes(searchTerm.toLowerCase()))
-    : Object.keys(grouped);
-
-  return (
-    <div style={{fontFamily:"'DM Mono','Courier New',monospace",background:"#0a0a0f",minHeight:"100vh",color:"#e8e4d9",padding:"28px 24px"}}>
-      <style>{`
-        .dz{border:1.5px dashed #1e1e2e;border-radius:8px;padding:18px;cursor:pointer;transition:all .2s;text-align:center;background:#0c0c16}
-        .dz:hover,.dz.on{border-color:#4ade80;background:#0a1a0f}
-        .dz input{display:none}
-        .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;letter-spacing:.04em}
-        .pg{background:#0d2a18;color:#4ade80;border:1px solid #166534}
-        .pr{background:#2a0d0d;color:#f87171;border:1px solid #7f1d1d}
-        .py{background:#2a220d;color:#fbbf24;border:1px solid #78350f}
-        .tab{padding:8px 14px;border:none;background:none;color:#444;cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border-bottom:2px solid transparent;transition:all .2s}
-        .tab.on{color:#4ade80;border-bottom-color:#4ade80}
-        .tab:hover{color:#e8e4d9}
-        table{width:100%;border-collapse:collapse;font-size:12px}
-        th{text-align:left;padding:8px 12px;color:#555;font-weight:400;letter-spacing:.08em;text-transform:uppercase;font-size:10px;border-bottom:1px solid #141422;position:sticky;top:0;background:#0a0a0f;z-index:1}
-        td{padding:7px 12px;border-bottom:1px solid #0e0e16;vertical-align:middle}
-        tr:hover td{background:#0c0c18}
-        .nr{text-align:right;font-variant-numeric:tabular-nums}
-        .pos{color:#4ade80}.neg{color:#f87171}.zer{color:#555}
-        .btn{background:#4ade80;color:#0a0a0f;border:none;padding:11px 26px;border-radius:6px;font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;letter-spacing:.05em;transition:all .15s}
-        .btn:hover{background:#86efac}
-        .btn:disabled{background:#112211;color:#2a4a2a;cursor:not-allowed}
-        .srch{background:#0e0e18;border:1px solid #1a1a2a;border-radius:6px;padding:8px 12px;color:#e8e4d9;font-family:inherit;font-size:12px;width:260px;outline:none}
-        .srch:focus{border-color:#4ade80}
-      `}</style>
-
-      {/* Header */}
-      <div style={{marginBottom:32}}>
-        <div style={{fontFamily:"'Syne',sans-serif",fontSize:26,fontWeight:800,letterSpacing:"-0.02em",marginBottom:4}}>
-          Return to Source <span style={{color:"#4ade80"}}>Calculator</span>
-        </div>
-        <div style={{color:"#333",fontSize:11,letterSpacing:".1em"}}>DEPOSIT · WITHDRAWAL · EXACT PSP ATTRIBUTION</div>
-      </div>
-
-      {/* How to get withdrawal CSV */}
-      <div style={{background:"#0e0e18",border:"1px solid #1a1a2a",borderRadius:8,padding:"14px 18px",marginBottom:24}}>
-        <div style={{color:"#fbbf24",fontSize:11,marginBottom:8,letterSpacing:".06em"}}>ℹ HOW TO GET THE WITHDRAWAL SHEET CSV</div>
-        <div style={{color:"#555",fontSize:11,lineHeight:1.8}}>
-          1. Open the <strong style={{color:"#888"}}>RTS Feed</strong> Google Sheet → go to <strong style={{color:"#888"}}>Sheet2</strong><br/>
-          2. Click <strong style={{color:"#888"}}>File → Download → Comma Separated Values (.csv)</strong><br/>
-          3. Upload that file below as the Withdrawal Sheet
-        </div>
-      </div>
-
-      {/* File Uploads */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}}>
-        {[
-          {label:"Main Transactions CSV", hint:"CRM export with deposits & withdrawals", file:mainFile, set:setMainFile},
-          {label:"Withdrawal Sheet CSV", hint:"Download Sheet2 from RTS Feed Google Sheet", file:wdFile, set:setWdFile},
-        ].map(({label,hint,file,set}) => (
-          <div key={label}>
-            <div style={{fontSize:10,color:"#444",letterSpacing:".1em",textTransform:"uppercase",marginBottom:8}}>{label}</div>
-            <label className={`dz ${file?"on":""}`}>
-              <input type="file" accept=".csv" onChange={e=>set(e.target.files[0])}/>
-              {file
-                ? <div><div style={{color:"#4ade80",marginBottom:3}}>✓ {file.name}</div><div style={{color:"#333",fontSize:11}}>{(file.size/1024).toFixed(1)} KB</div></div>
-                : <div><div style={{color:"#333",marginBottom:4}}>Drop CSV or click to browse</div><div style={{color:"#1e1e2e",fontSize:11}}>{hint}</div></div>}
-            </label>
-          </div>
-        ))}
-      </div>
-
-      <button className="btn" onClick={handleProcess} disabled={!mainFile||!wdFile||loading} style={{marginBottom:28}}>
-        {loading ? "Processing…" : "Process"}
-      </button>
-
-      {error && <div style={{background:"#150808",border:"1px solid #7f1d1d",borderRadius:8,padding:14,marginBottom:20,color:"#f87171",fontSize:12}}>⚠ {error}</div>}
-
-      {result && <>
-        {/* Stats */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:28}}>
-          {[
-            {label:"Total Deposited",value:fmt(result.totalDep),color:"#4ade80"},
-            {label:"Total Withdrawn",value:fmt(result.totalWd),color:"#f87171"},
-            {label:"Net Remaining",value:fmt(result.totalDep-result.totalWd),color:result.totalDep-result.totalWd>=0?"#4ade80":"#f87171"},
-            {label:"Clients",value:Object.keys(grouped).length,color:"#60a5fa"},
-          ].map(({label,value,color})=>(
-            <div key={label} style={{background:"#0e0e18",border:"1px solid #141422",borderRadius:8,padding:"14px 18px"}}>
-              <div style={{color:"#333",fontSize:10,letterSpacing:".1em",textTransform:"uppercase",marginBottom:8}}>{label}</div>
-              <div style={{color,fontSize:18,fontWeight:500,fontVariantNumeric:"tabular-nums"}}>{value}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Tabs */}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid #141422",marginBottom:20}}>
-          <div style={{display:"flex"}}>
-            {[
-              {id:"results",label:`Results (${filtered.length})`},
-              {id:"profit",label:`Profit Payouts (${result.profitPayouts.length})`},
-              {id:"notes",label:`Split Notes (${result.notes.length})`},
-              {id:"unmatched",label:`Unmatched (${result.unmatched.length})`},
-            ].map(({id,label})=>(
-              <button key={id} className={`tab ${activeTab===id?"on":""}`} onClick={()=>setActiveTab(id)}>{label}</button>
-            ))}
-          </div>
-          {activeTab==="results" && (
-            <input className="srch" placeholder="Search client email…" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)}/>
-          )}
-        </div>
-
-        {activeTab==="results" && (
-          <div style={{overflowX:"auto",maxHeight:"60vh",overflowY:"auto"}}>
-            <table>
-              <thead><tr>
-                <th>Client</th><th>Method Group</th>
-                <th className="nr">Deposited</th><th className="nr">Withdrawn</th>
-                <th className="nr">Balance</th><th>Status</th>
-              </tr></thead>
-              <tbody>
-                {filtered.map(email=>grouped[email].map((row,i)=>(
-                  <tr key={`${email}-${row.group}`}>
-                    <td style={{color:i===0?"#c8c4b9":"#222",fontSize:11,maxWidth:200,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{i===0?email:"↳"}</td>
-                    <td style={{color:"#7c6fcd",fontSize:11}}>{row.group}</td>
-                    <td className="nr" style={{color:"#4ade80"}}>{row.dep>0?fmt(row.dep):"—"}</td>
-                    <td className="nr" style={{color:"#f87171"}}>{row.wd>0?fmt(row.wd):"—"}</td>
-                    <td className={`nr ${row.bal>0.01?"pos":row.bal<-0.01?"neg":"zer"}`}>{fmt(row.bal)}</td>
-                    <td>
-                      {row.bal>0.01&&<span className="pill pg">↑ To return</span>}
-                      {row.bal<-0.01&&<span className="pill pr">↓ Over-withdrawn</span>}
-                      {Math.abs(row.bal)<=0.01&&<span className="pill" style={{background:"#111",color:"#333",border:"1px solid #1a1a1a"}}>Settled</span>}
-                    </td>
-                  </tr>
-                )))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {activeTab==="profit" && (
-          <div style={{overflowX:"auto",maxHeight:"60vh",overflowY:"auto"}}>
-            {result.profitPayouts.length===0
-              ? <div style={{color:"#333",padding:32,textAlign:"center"}}>No profit payouts detected</div>
-              : <table>
-                  <thead><tr><th>Client</th><th>PSP</th><th className="nr">Amount</th><th>Date</th><th>Note</th></tr></thead>
-                  <tbody>{result.profitPayouts.map((p,i)=>(
-                    <tr key={i}>
-                      <td style={{fontSize:11}}>{p.email}</td>
-                      <td style={{color:"#fbbf24",fontSize:11}}>{p.psp}</td>
-                      <td className="nr" style={{color:"#fbbf24"}}>{fmt(p.amount)}</td>
-                      <td style={{color:"#444",fontSize:10}}>{p.date}</td>
-                      <td><span className="pill py">Profit Payout</span></td>
-                    </tr>
-                  ))}</tbody>
-                </table>}
-          </div>
-        )}
-
-        {activeTab==="notes" && (
-          <div style={{maxHeight:"60vh",overflowY:"auto"}}>
-            {result.notes.length===0
-              ? <div style={{color:"#333",padding:32,textAlign:"center"}}>✓ All withdrawals matched exactly</div>
-              : result.notes.map((note,i)=>(
-                  <div key={i} style={{background:"#0e0e18",border:"1px solid #141422",borderRadius:6,padding:"10px 14px",marginBottom:8,fontSize:11,color:"#7c6fcd",lineHeight:1.6}}>⚖ {note}</div>
-                ))}
-          </div>
-        )}
-
-        {activeTab==="unmatched" && (
-          <div style={{maxHeight:"60vh",overflowY:"auto"}}>
-            {result.unmatched.length===0
-              ? <div style={{color:"#333",padding:32,textAlign:"center"}}>✓ All rows matched successfully</div>
-              : <table>
-                  <thead><tr><th>ID</th><th>Client</th><th>Method</th><th className="nr">Amount</th><th>Reason</th></tr></thead>
-                  <tbody>{result.unmatched.map((u,i)=>(
-                    <tr key={i}>
-                      <td style={{color:"#333",fontSize:10}}>{u.id}</td>
-                      <td style={{fontSize:11}}>{u.email}</td>
-                      <td style={{color:"#f87171",fontSize:11}}>{u.method}</td>
-                      <td className="nr">{fmt(u.value)}</td>
-                      <td style={{color:"#555",fontSize:11}}>{u.reason}</td>
-                    </tr>
-                  ))}</tbody>
-                </table>}
-          </div>
-        )}
-      </>}
-
-      {!result&&!loading&&(
-        <div style={{textAlign:"center",padding:"60px 0",color:"#1a1a2a"}}>
-          <div style={{fontSize:40,marginBottom:12}}>⬆</div>
-          <div style={{fontSize:11,letterSpacing:".12em",textTransform:"uppercase"}}>Upload both files to begin</div>
-        </div>
-      )}
-    </div>
-  );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+document.getElementById("mainFile").addEventListener("change",function(){
+  const file=this.files[0];
+  if(!file)return;
+  readFile(file).then(text=>{
+    mainText=text;
+    document.getElementById("dz1-content").innerHTML=`<div class="filename">✓ ${file.name}</div><div class="filesize">${(file.size/1024).toFixed(1)} KB</div>`;
+    document.getElementById("dz1").classList.add("active");
+    checkReady();
+  });
+});
+
+document.getElementById("wdFile").addEventListener("change",function(){
+  const file=this.files[0];
+  if(!file)return;
+  readFile(file).then(text=>{
+    wdText=text;
+    document.getElementById("dz2-content").innerHTML=`<div class="filename">✓ ${file.name}</div><div class="filesize">${(file.size/1024).toFixed(1)} KB</div>`;
+    document.getElementById("dz2").classList.add("active");
+    checkReady();
+  });
+});
+
+function checkReady(){
+  document.getElementById("processBtn").disabled=!(mainText&&wdText);
+}
+
+document.getElementById("processBtn").addEventListener("click",function(){
+  const errorBox=document.getElementById("errorBox");
+  errorBox.style.display="none";
+  try{
+    const mainRows=parseMainCSV(mainText);
+    const wdRows=parseMirrorCSV(wdText);
+    if(mainRows.length===0)throw new Error("Main CSV appears empty or invalid.");
+    if(wdRows.length===0)throw new Error("Withdrawal Sheet CSV appears empty or invalid.");
+    currentResult=process(mainRows,wdRows);
+    renderResults(currentResult);
+  }catch(e){
+    errorBox.textContent="⚠ "+e.message;
+    errorBox.style.display="block";
+  }
+});
+
+function renderResults(res){
+  document.getElementById("placeholder").style.display="none";
+  document.getElementById("statsBox").style.display="block";
+
+  // Stats
+  document.getElementById("sTotalDep").textContent=fmt(res.totalDep);
+  document.getElementById("sTotalWd").textContent=fmt(res.totalWd);
+  const net=res.totalDep-res.totalWd;
+  const sNet=document.getElementById("sNet");
+  sNet.textContent=fmt(net);
+  sNet.style.color=net>=0?"#4ade80":"#f87171";
+  document.getElementById("sClients").textContent=Object.keys(allGrouped).length;
+
+  // Group results by email
+  allGrouped={};
+  for(const row of res.results){
+    if(!allGrouped[row.email])allGrouped[row.email]=[];
+    allGrouped[row.email].push(row);
+  }
+  document.getElementById("sClients").textContent=Object.keys(allGrouped).length;
+
+  // Tab counts
+  document.getElementById("tResults").textContent=Object.keys(allGrouped).length;
+  document.getElementById("tProfit").textContent=res.profitPayouts.length;
+  document.getElementById("tNotes").textContent=res.notes.length;
+  document.getElementById("tUnmatched").textContent=res.unmatched.length;
+
+  renderResultsTable(Object.keys(allGrouped));
+
+  // Profit
+  const pb=document.getElementById("profitBody");
+  pb.innerHTML=res.profitPayouts.length===0
+    ?'<tr><td colspan="5" class="empty">No profit payouts detected</td></tr>'
+    :res.profitPayouts.map(p=>`<tr>
+      <td style="font-size:11px">${p.email}</td>
+      <td style="color:#fbbf24;font-size:11px">${p.psp}</td>
+      <td class="nr" style="color:#fbbf24">${fmt(p.amount)}</td>
+      <td style="color:#444;font-size:10px">${p.date}</td>
+      <td><span class="pill pill-y">Profit Payout</span></td>
+    </tr>`).join("");
+
+  // Notes
+  const nb=document.getElementById("notesBody");
+  nb.innerHTML=res.notes.length===0
+    ?'<div class="empty">✓ All withdrawals matched exactly</div>'
+    :res.notes.map(n=>`<div class="note-row">⚖ ${n}</div>`).join("");
+
+  // Unmatched
+  const ub=document.getElementById("unmatchedBody");
+  ub.innerHTML=res.unmatched.length===0
+    ?'<tr><td colspan="5" class="empty">✓ All rows matched successfully</td></tr>'
+    :res.unmatched.map(u=>`<tr>
+      <td style="color:#333;font-size:10px">${u.id}</td>
+      <td style="font-size:11px">${u.email}</td>
+      <td style="color:#f87171;font-size:11px">${u.method}</td>
+      <td class="nr">${fmt(u.value)}</td>
+      <td style="color:#555;font-size:11px">${u.reason}</td>
+    </tr>`).join("");
+
+  showTab("results");
+}
+
+function renderResultsTable(emails){
+  const body=document.getElementById("resultsBody");
+  let html="";
+  for(const email of emails){
+    const rows=allGrouped[email];
+    rows.forEach((row,i)=>{
+      const balClass=row.bal>0.01?"pos":row.bal<-0.01?"neg":"zer";
+      const pill=row.bal>0.01?'<span class="pill pill-g">↑ To return</span>'
+        :row.bal<-0.01?'<span class="pill pill-r">↓ Over-withdrawn</span>'
+        :'<span class="pill pill-s">Settled</span>';
+      html+=`<tr>
+        <td style="color:${i===0?"#c8c4b9":"#222"};font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i===0?email:"↳"}</td>
+        <td style="color:#7c6fcd;font-size:11px">${row.group}</td>
+        <td class="nr" style="color:#4ade80">${row.dep>0?fmt(row.dep):"—"}</td>
+        <td class="nr" style="color:#f87171">${row.wd>0?fmt(row.wd):"—"}</td>
+        <td class="nr ${balClass}">${fmt(row.bal)}</td>
+        <td>${pill}</td>
+      </tr>`;
+    });
+  }
+  body.innerHTML=html;
+}
+
+function filterResults(){
+  const term=document.getElementById("searchBox").value.toLowerCase();
+  const emails=term?Object.keys(allGrouped).filter(e=>e.toLowerCase().includes(term)):Object.keys(allGrouped);
+  renderResultsTable(emails);
+}
+
+function showTab(tab){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll("[id$='-panel']").forEach(p=>p.style.display="none");
+  document.getElementById(tab+"-panel").style.display="block";
+  event.target.classList.add("active");
+  document.getElementById("searchBox").style.display=tab==="results"?"block":"none";
+}
 </script>
 </body>
 </html>
