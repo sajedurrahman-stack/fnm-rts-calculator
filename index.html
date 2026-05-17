@@ -397,6 +397,35 @@ function App() {
 
       {error && <div style={{background:"#150808",border:"1px solid #7f1d1d",borderRadius:8,padding:14,marginBottom:20,color:"#f87171",fontSize:12}}>⚠ {error}</div>}
 
+      {wdStatus === "error" && (
+        <div style={{background:"#0e0e18",border:"1px solid #2a1a00",borderRadius:10,padding:"20px 24px",marginBottom:24}}>
+          <div style={{color:"#fbbf24",fontSize:13,fontWeight:500,marginBottom:12}}>⚠ Withdrawal Feed — Authentication Required</div>
+          <div style={{color:"#888",fontSize:12,lineHeight:1.8,marginBottom:16}}>
+            The withdrawal feed requires your Next Ventures Google account. Follow these steps in Prisma browser:
+          </div>
+          <div style={{display:"grid",gap:8}}>
+            {[
+              "Open a new tab in Prisma browser",
+              "Go to: accounts.google.com",
+              "Sign in with your @nextventures.io account",
+              "Come back to this tab and click ↺ Refresh now"
+            ].map((step, i) => (
+              <div key={i} style={{display:"flex",gap:12,alignItems:"flex-start"}}>
+                <span style={{background:"#2a1a00",color:"#fbbf24",borderRadius:"50%",width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,flexShrink:0,marginTop:1}}>{i+1}</span>
+                <span style={{color:"#aaa",fontSize:12}}>{step}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{marginTop:16,padding:"10px 14px",background:"#0a0a0f",borderRadius:6,border:"1px solid #1a1a2a"}}>
+            <div style={{fontSize:10,color:"#444",letterSpacing:".08em",textTransform:"uppercase",marginBottom:4}}>Feed URL — open this in a new tab first</div>
+            <div style={{fontSize:11,color:"#4ade80",wordBreak:"break-all"}}>
+              https://script.google.com/a/macros/nextventures.io/s/AKfycbyO3syOm55XrcPaN69QLSjaHRAUG_kfgUQSSdJWdca1UyQ7_npkOmMltqu9vfUc8F6Pyg/exec
+            </div>
+          </div>
+          <button className="btn" style={{marginTop:16,fontSize:11,padding:"8px 20px"}} onClick={fetchMirror}>↺ Refresh now</button>
+        </div>
+      )}
+
       {result && <>
         {/* Stats */}
         <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:28}}>
