@@ -7,49 +7,34 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #0a0a0f; color: #e8e4d9; font-family: 'DM Mono', 'Courier New', monospace; }
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: #111; }
-  ::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 3px; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0a0a0f; color: #e8e4d9; font-family: 'DM Mono', 'Courier New', monospace; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #111; }
+::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 3px; }
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useRef } = React;
-
-const FEED_URL = "https://script.google.com/a/macros/nextventures.io/s/AKfycbyO3syOm55XrcPaN69QLSjaHRAUG_kfgUQSSdJWdca1UyQ7_npkOmMltqu9vfUc8F6Pyg/exec";
-const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+const { useState, useCallback } = React;
 
 const ACQUIRER_MAP = {
-  jena_pay: "Card (JenaPay)",
-  brightcart: "Card (Brightcart)",
-  pay_maxis: "Card (PayMaxis)",
-  apple_pay_via_pay_maxis: "Apple Pay",
-  google_pay_via_pay_maxis: "Google Pay",
-  confirmo: "Crypto (Confirmo)",
-  bridgerpay: "Crypto (Confirmo)",
-  volet: "Wallet (Volet)",
-  d24: "Form D24",
+  jena_pay: "Card (JenaPay)", brightcart: "Card (Brightcart)",
+  pay_maxis: "Card (PayMaxis)", apple_pay_via_pay_maxis: "Apple Pay",
+  google_pay_via_pay_maxis: "Google Pay", confirmo: "Crypto (Confirmo)",
+  bridgerpay: "Crypto (Confirmo)", volet: "Wallet (Volet)", d24: "Form D24",
 };
 
 const PSP_MAP = {
-  jenapay: "Card (JenaPay)",
-  jena_pay: "Card (JenaPay)",
-  "jena pay": "Card (JenaPay)",
-  brightcart: "Card (Brightcart)",
-  paymaxis: "Card (PayMaxis)",
-  pay_maxis: "Card (PayMaxis)",
-  "pay maxis": "Card (PayMaxis)",
-  coinsbuy: "Crypto (Confirmo)",
-  confirmo: "Crypto (Confirmo)",
-  volet: "Wallet (Volet)",
-  limepay: "Form D24",
-  d24: "Form D24",
+  jenapay: "Card (JenaPay)", jena_pay: "Card (JenaPay)", "jena pay": "Card (JenaPay)",
+  brightcart: "Card (Brightcart)", paymaxis: "Card (PayMaxis)",
+  pay_maxis: "Card (PayMaxis)", "pay maxis": "Card (PayMaxis)",
+  coinsbuy: "Crypto (Confirmo)", confirmo: "Crypto (Confirmo)",
+  volet: "Wallet (Volet)", limepay: "Form D24", d24: "Form D24",
+  "brightcart(ellerman)": "Card (Brightcart)", "brightcart (ellerman)": "Card (Brightcart)",
 };
 
 function normalizePSP(raw) {
@@ -62,16 +47,14 @@ function parseCSV(text) {
   const lines = text.split(/\r?\n/).filter(l => l.trim());
   const rows = [];
   for (const line of lines) {
-    const cols = [];
-    let cur = "", inQ = false;
+    const cols = []; let cur = "", inQ = false;
     for (let i = 0; i < line.length; i++) {
       const c = line[i];
       if (c === '"') { inQ = !inQ; }
       else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ""; }
       else { cur += c; }
     }
-    cols.push(cur.trim());
-    rows.push(cols);
+    cols.push(cur.trim()); rows.push(cols);
   }
   return rows;
 }
@@ -86,8 +69,7 @@ function parseMainCSV(text) {
     acquirer: idx("Acquirer"), method: idx("Method"),
     value: idx("Value in base currency"), type: idx("Type"),
     success: idx("Success"), payState: idx("Payment state"),
-    tpiState: idx("Tpi state"), gatewayId: idx("Gateway id"),
-    date: idx("Date"),
+    tpiState: idx("Tpi state"), gatewayId: idx("Gateway id"), date: idx("Date"),
   };
   return rows.slice(1).map(r => ({
     id: r[I.id], user: r[I.user], email: r[I.email],
@@ -122,17 +104,14 @@ function process(mainRows, wdRows) {
   const valid = mainRows.filter(r =>
     r.success === "True" && r.payState === "Success" && r.tpiState === "Success"
   );
-
   const wdLookup = {};
   for (const wd of wdRows) {
     for (const pid of wd.paymentIds) {
       if (pid) wdLookup[pid.toLowerCase()] = { psp: wd.psp, type: wd.type };
     }
   }
-
   const deposits = valid.filter(r => r.type === "Deposit");
   const withdrawals = valid.filter(r => r.type === "Withdraw");
-
   const clientDeposits = {};
   for (const d of deposits) {
     const email = d.email;
@@ -140,7 +119,6 @@ function process(mainRows, wdRows) {
     if (!clientDeposits[email]) clientDeposits[email] = {};
     clientDeposits[email][group] = (clientDeposits[email][group] || 0) + d.value;
   }
-
   const clientWithdrawals = {};
   const profitPayouts = [];
   const unmatched = [];
@@ -209,7 +187,6 @@ function process(mainRows, wdRows) {
         continue;
       }
     }
-
     if (methodGroup) {
       clientWithdrawals[email][methodGroup] = (clientWithdrawals[email][methodGroup] || 0) + w.value;
     }
@@ -223,8 +200,7 @@ function process(mainRows, wdRows) {
     const wds = clientWithdrawals[email] || {};
     const groups = new Set([...Object.keys(deps), ...Object.keys(wds)]);
     for (const group of groups) {
-      const dep = deps[group] || 0;
-      const wd = wds[group] || 0;
+      const dep = deps[group] || 0; const wd = wds[group] || 0;
       totalDep += dep; totalWd += wd;
       results.push({ email, group, dep, wd, bal: dep - wd });
     }
@@ -233,80 +209,34 @@ function process(mainRows, wdRows) {
 }
 
 const fmt = n => (n < 0 ? "-" : "") + "$" + Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-function timeAgo(date) {
-  if (!date) return "never";
-  const s = Math.floor((Date.now() - date) / 1000);
-  if (s < 60) return `${s}s ago`;
-  if (s < 3600) return `${Math.floor(s/60)}m ago`;
-  return `${Math.floor(s/3600)}h ago`;
-}
 
 function App() {
   const [mainFile, setMainFile] = useState(null);
-  const [mainRows, setMainRows] = useState(null);
-  const [wdRows, setWdRows] = useState(null);
-  const [wdCount, setWdCount] = useState(0);
-  const [wdLastFetch, setWdLastFetch] = useState(null);
-  const [wdStatus, setWdStatus] = useState("idle");
+  const [wdFile, setWdFile] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("results");
-  const [countdown, setCountdown] = useState(REFRESH_INTERVAL_MS / 1000);
   const [searchTerm, setSearchTerm] = useState("");
-  const timerRef = useRef(null);
-  const countdownRef = useRef(null);
 
-  const fetchMirror = async () => {
-    setWdStatus("loading");
-    try {
-      const res = await fetch(FEED_URL);
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const json = await res.json();
-      const rows = (json.data || []).map(r => ({
-        paymentIds: String(r[0] || "").split(/[\n,]/).map(s => s.trim()).filter(s => s.length > 5),
-        psp: String(r[1] || "").trim(),
-        type: String(r[2] || "").trim()
-      })).filter(r => r.paymentIds.length > 0 || r.psp);
-      setWdRows(rows);
-      setWdCount(rows.length);
-      setWdLastFetch(Date.now());
-      setWdStatus("ok");
-      return rows;
-    } catch(e) {
-      setWdStatus("error");
-      return null;
-    }
-  };
-
-  useEffect(() => {
-    fetchMirror();
-    timerRef.current = setInterval(() => { fetchMirror(); setCountdown(REFRESH_INTERVAL_MS/1000); }, REFRESH_INTERVAL_MS);
-    countdownRef.current = setInterval(() => setCountdown(c => c <= 1 ? REFRESH_INTERVAL_MS/1000 : c-1), 1000);
-    return () => { clearInterval(timerRef.current); clearInterval(countdownRef.current); };
-  }, []);
-
-  useEffect(() => {
-    if (mainRows && wdRows) setResult(process(mainRows, wdRows));
-  }, [wdRows]);
-
-  const readFile = file => new Promise((res, rej) => {
+  const readFile = f => new Promise((res, rej) => {
     const r = new FileReader();
     r.onload = e => res(e.target.result);
     r.onerror = rej;
-    r.readAsText(file);
+    r.readAsText(f);
   });
 
   const handleProcess = async () => {
-    if (!mainFile) return;
+    if (!mainFile || !wdFile) return;
     setLoading(true); setError(null);
     try {
-      const text = await readFile(mainFile);
-      const parsed = parseMainCSV(text);
-      setMainRows(parsed);
-      const wd = wdRows || await fetchMirror();
-      if (wd) { setResult(process(parsed, wd)); setActiveTab("results"); }
-      else setError("Could not fetch withdrawal sheet. Check connection.");
+      const [mainText, wdText] = await Promise.all([readFile(mainFile), readFile(wdFile)]);
+      const mainRows = parseMainCSV(mainText);
+      const wdRows = parseMirrorCSV(wdText);
+      if (mainRows.length === 0) throw new Error("Main CSV appears empty or invalid.");
+      if (wdRows.length === 0) throw new Error("Withdrawal sheet CSV appears empty or invalid.");
+      const res = process(mainRows, wdRows);
+      setResult(res); setActiveTab("results");
     } catch(e) { setError(e.message); }
     setLoading(false);
   };
@@ -320,111 +250,73 @@ function App() {
     ? Object.keys(grouped).filter(e => e.toLowerCase().includes(searchTerm.toLowerCase()))
     : Object.keys(grouped);
 
-  const nextRefresh = Math.floor(countdown/60) + ":" + String(countdown%60).padStart(2,"0");
-
   return (
     <div style={{fontFamily:"'DM Mono','Courier New',monospace",background:"#0a0a0f",minHeight:"100vh",color:"#e8e4d9",padding:"28px 24px"}}>
       <style>{`
-        .drop-zone{border:1.5px dashed #1e1e2e;border-radius:8px;padding:18px;cursor:pointer;transition:all .2s;text-align:center;background:#0c0c16}
-        .drop-zone:hover,.drop-zone.active{border-color:#4ade80;background:#0a1a0f}
-        .drop-zone input{display:none}
+        .dz{border:1.5px dashed #1e1e2e;border-radius:8px;padding:18px;cursor:pointer;transition:all .2s;text-align:center;background:#0c0c16}
+        .dz:hover,.dz.on{border-color:#4ade80;background:#0a1a0f}
+        .dz input{display:none}
         .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;letter-spacing:.04em}
-        .pill-green{background:#0d2a18;color:#4ade80;border:1px solid #166534}
-        .pill-red{background:#2a0d0d;color:#f87171;border:1px solid #7f1d1d}
-        .pill-yellow{background:#2a220d;color:#fbbf24;border:1px solid #78350f}
+        .pg{background:#0d2a18;color:#4ade80;border:1px solid #166534}
+        .pr{background:#2a0d0d;color:#f87171;border:1px solid #7f1d1d}
+        .py{background:#2a220d;color:#fbbf24;border:1px solid #78350f}
         .tab{padding:8px 14px;border:none;background:none;color:#444;cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border-bottom:2px solid transparent;transition:all .2s}
-        .tab.active{color:#4ade80;border-bottom-color:#4ade80}
+        .tab.on{color:#4ade80;border-bottom-color:#4ade80}
         .tab:hover{color:#e8e4d9}
         table{width:100%;border-collapse:collapse;font-size:12px}
         th{text-align:left;padding:8px 12px;color:#555;font-weight:400;letter-spacing:.08em;text-transform:uppercase;font-size:10px;border-bottom:1px solid #141422;position:sticky;top:0;background:#0a0a0f;z-index:1}
         td{padding:7px 12px;border-bottom:1px solid #0e0e16;vertical-align:middle}
         tr:hover td{background:#0c0c18}
-        .num{text-align:right;font-variant-numeric:tabular-nums}
-        .pos{color:#4ade80}.neg{color:#f87171}.zero{color:#555}
+        .nr{text-align:right;font-variant-numeric:tabular-nums}
+        .pos{color:#4ade80}.neg{color:#f87171}.zer{color:#555}
         .btn{background:#4ade80;color:#0a0a0f;border:none;padding:11px 26px;border-radius:6px;font-family:inherit;font-size:12px;font-weight:500;cursor:pointer;letter-spacing:.05em;transition:all .15s}
         .btn:hover{background:#86efac}
         .btn:disabled{background:#112211;color:#2a4a2a;cursor:not-allowed}
-        .search{background:#0e0e18;border:1px solid #1a1a2a;border-radius:6px;padding:8px 12px;color:#e8e4d9;font-family:inherit;font-size:12px;width:260px;outline:none}
-        .search:focus{border-color:#4ade80}
-        .live-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:6px}
-        .live-dot.ok{background:#4ade80;box-shadow:0 0 6px #4ade80;animation:pulse 2s infinite}
-        .live-dot.loading{background:#fbbf24}
-        .live-dot.error{background:#f87171}
-        .live-dot.idle{background:#333}
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-        .refresh-btn{background:none;border:1px solid #1a1a2a;color:#555;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;font-family:inherit;letter-spacing:.05em;margin-top:6px}
-        .refresh-btn:hover{border-color:#4ade80;color:#4ade80}
+        .srch{background:#0e0e18;border:1px solid #1a1a2a;border-radius:6px;padding:8px 12px;color:#e8e4d9;font-family:inherit;font-size:12px;width:260px;outline:none}
+        .srch:focus{border-color:#4ade80}
       `}</style>
 
       {/* Header */}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:32}}>
-        <div>
-          <div style={{fontFamily:"'Syne',sans-serif",fontSize:26,fontWeight:800,letterSpacing:"-0.02em",marginBottom:4}}>
-            Return to Source <span style={{color:"#4ade80"}}>Calculator</span>
-          </div>
-          <div style={{color:"#333",fontSize:11,letterSpacing:".1em"}}>DEPOSIT · WITHDRAWAL · EXACT PSP ATTRIBUTION</div>
+      <div style={{marginBottom:32}}>
+        <div style={{fontFamily:"'Syne',sans-serif",fontSize:26,fontWeight:800,letterSpacing:"-0.02em",marginBottom:4}}>
+          Return to Source <span style={{color:"#4ade80"}}>Calculator</span>
         </div>
-        <div style={{background:"#0e0e18",border:"1px solid #1a1a2a",borderRadius:8,padding:"12px 16px",textAlign:"right",minWidth:210}}>
-          <div style={{fontSize:10,color:"#444",letterSpacing:".08em",textTransform:"uppercase",marginBottom:6}}>Withdrawal Feed</div>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"flex-end",marginBottom:4}}>
-            <span className={`live-dot ${wdStatus}`}></span>
-            <span style={{fontSize:11,color:wdStatus==="ok"?"#4ade80":wdStatus==="error"?"#f87171":"#fbbf24"}}>
-              {wdStatus==="ok"?`${wdCount.toLocaleString()} rows loaded`:wdStatus==="loading"?"Fetching…":wdStatus==="error"?"Connection error":"Connecting…"}
-            </span>
-          </div>
-          <div style={{fontSize:10,color:"#333"}}>Updated {timeAgo(wdLastFetch)} · next in {nextRefresh}</div>
-          <button className="refresh-btn" onClick={fetchMirror}>↺ Refresh now</button>
+        <div style={{color:"#333",fontSize:11,letterSpacing:".1em"}}>DEPOSIT · WITHDRAWAL · EXACT PSP ATTRIBUTION</div>
+      </div>
+
+      {/* How to get withdrawal CSV */}
+      <div style={{background:"#0e0e18",border:"1px solid #1a1a2a",borderRadius:8,padding:"14px 18px",marginBottom:24}}>
+        <div style={{color:"#fbbf24",fontSize:11,marginBottom:8,letterSpacing:".06em"}}>ℹ HOW TO GET THE WITHDRAWAL SHEET CSV</div>
+        <div style={{color:"#555",fontSize:11,lineHeight:1.8}}>
+          1. Open the <strong style={{color:"#888"}}>RTS Feed</strong> Google Sheet → go to <strong style={{color:"#888"}}>Sheet2</strong><br/>
+          2. Click <strong style={{color:"#888"}}>File → Download → Comma Separated Values (.csv)</strong><br/>
+          3. Upload that file below as the Withdrawal Sheet
         </div>
       </div>
 
-      {/* Upload */}
-      <div style={{display:"flex",gap:16,alignItems:"flex-end",marginBottom:28}}>
-        <div style={{flex:1}}>
-          <div style={{fontSize:10,color:"#444",letterSpacing:".1em",textTransform:"uppercase",marginBottom:8}}>Main Transactions CSV</div>
-          <label className={`drop-zone ${mainFile?"active":""}`}>
-            <input type="file" accept=".csv" onChange={e=>setMainFile(e.target.files[0])}/>
-            {mainFile
-              ? <div><div style={{color:"#4ade80",marginBottom:3}}>✓ {mainFile.name}</div><div style={{color:"#333",fontSize:11}}>{(mainFile.size/1024).toFixed(1)} KB</div></div>
-              : <div style={{color:"#333"}}>Drop CRM export CSV or click to browse</div>}
-          </label>
-        </div>
-        <div style={{paddingBottom:4}}>
-          <button className="btn" onClick={handleProcess} disabled={!mainFile||loading||wdStatus==="loading"}>
-            {loading?"Processing…":"Process"}
-          </button>
-        </div>
+      {/* File Uploads */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}}>
+        {[
+          {label:"Main Transactions CSV", hint:"CRM export with deposits & withdrawals", file:mainFile, set:setMainFile},
+          {label:"Withdrawal Sheet CSV", hint:"Download Sheet2 from RTS Feed Google Sheet", file:wdFile, set:setWdFile},
+        ].map(({label,hint,file,set}) => (
+          <div key={label}>
+            <div style={{fontSize:10,color:"#444",letterSpacing:".1em",textTransform:"uppercase",marginBottom:8}}>{label}</div>
+            <label className={`dz ${file?"on":""}`}>
+              <input type="file" accept=".csv" onChange={e=>set(e.target.files[0])}/>
+              {file
+                ? <div><div style={{color:"#4ade80",marginBottom:3}}>✓ {file.name}</div><div style={{color:"#333",fontSize:11}}>{(file.size/1024).toFixed(1)} KB</div></div>
+                : <div><div style={{color:"#333",marginBottom:4}}>Drop CSV or click to browse</div><div style={{color:"#1e1e2e",fontSize:11}}>{hint}</div></div>}
+            </label>
+          </div>
+        ))}
       </div>
+
+      <button className="btn" onClick={handleProcess} disabled={!mainFile||!wdFile||loading} style={{marginBottom:28}}>
+        {loading ? "Processing…" : "Process"}
+      </button>
 
       {error && <div style={{background:"#150808",border:"1px solid #7f1d1d",borderRadius:8,padding:14,marginBottom:20,color:"#f87171",fontSize:12}}>⚠ {error}</div>}
-
-      {wdStatus === "error" && (
-        <div style={{background:"#0e0e18",border:"1px solid #2a1a00",borderRadius:10,padding:"20px 24px",marginBottom:24}}>
-          <div style={{color:"#fbbf24",fontSize:13,fontWeight:500,marginBottom:12}}>⚠ Withdrawal Feed — Authentication Required</div>
-          <div style={{color:"#888",fontSize:12,lineHeight:1.8,marginBottom:16}}>
-            The withdrawal feed requires your Next Ventures Google account. Follow these steps in Prisma browser:
-          </div>
-          <div style={{display:"grid",gap:8}}>
-            {[
-              "Open a new tab in Prisma browser",
-              "Go to: accounts.google.com",
-              "Sign in with your @nextventures.io account",
-              "Come back to this tab and click ↺ Refresh now"
-            ].map((step, i) => (
-              <div key={i} style={{display:"flex",gap:12,alignItems:"flex-start"}}>
-                <span style={{background:"#2a1a00",color:"#fbbf24",borderRadius:"50%",width:22,height:22,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,flexShrink:0,marginTop:1}}>{i+1}</span>
-                <span style={{color:"#aaa",fontSize:12}}>{step}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{marginTop:16,padding:"10px 14px",background:"#0a0a0f",borderRadius:6,border:"1px solid #1a1a2a"}}>
-            <div style={{fontSize:10,color:"#444",letterSpacing:".08em",textTransform:"uppercase",marginBottom:4}}>Feed URL — open this in a new tab first</div>
-            <div style={{fontSize:11,color:"#4ade80",wordBreak:"break-all"}}>
-              https://script.google.com/a/macros/nextventures.io/s/AKfycbyO3syOm55XrcPaN69QLSjaHRAUG_kfgUQSSdJWdca1UyQ7_npkOmMltqu9vfUc8F6Pyg/exec
-            </div>
-          </div>
-          <button className="btn" style={{marginTop:16,fontSize:11,padding:"8px 20px"}} onClick={fetchMirror}>↺ Refresh now</button>
-        </div>
-      )}
 
       {result && <>
         {/* Stats */}
@@ -451,11 +343,11 @@ function App() {
               {id:"notes",label:`Split Notes (${result.notes.length})`},
               {id:"unmatched",label:`Unmatched (${result.unmatched.length})`},
             ].map(({id,label})=>(
-              <button key={id} className={`tab ${activeTab===id?"active":""}`} onClick={()=>setActiveTab(id)}>{label}</button>
+              <button key={id} className={`tab ${activeTab===id?"on":""}`} onClick={()=>setActiveTab(id)}>{label}</button>
             ))}
           </div>
           {activeTab==="results" && (
-            <input className="search" placeholder="Search client email…" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)}/>
+            <input className="srch" placeholder="Search client email…" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)}/>
           )}
         </div>
 
@@ -464,20 +356,20 @@ function App() {
             <table>
               <thead><tr>
                 <th>Client</th><th>Method Group</th>
-                <th className="num">Deposited</th><th className="num">Withdrawn</th>
-                <th className="num">Balance</th><th>Status</th>
+                <th className="nr">Deposited</th><th className="nr">Withdrawn</th>
+                <th className="nr">Balance</th><th>Status</th>
               </tr></thead>
               <tbody>
                 {filtered.map(email=>grouped[email].map((row,i)=>(
                   <tr key={`${email}-${row.group}`}>
                     <td style={{color:i===0?"#c8c4b9":"#222",fontSize:11,maxWidth:200,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{i===0?email:"↳"}</td>
                     <td style={{color:"#7c6fcd",fontSize:11}}>{row.group}</td>
-                    <td className="num" style={{color:"#4ade80"}}>{row.dep>0?fmt(row.dep):"—"}</td>
-                    <td className="num" style={{color:"#f87171"}}>{row.wd>0?fmt(row.wd):"—"}</td>
-                    <td className={`num ${row.bal>0.01?"pos":row.bal<-0.01?"neg":"zero"}`}>{fmt(row.bal)}</td>
+                    <td className="nr" style={{color:"#4ade80"}}>{row.dep>0?fmt(row.dep):"—"}</td>
+                    <td className="nr" style={{color:"#f87171"}}>{row.wd>0?fmt(row.wd):"—"}</td>
+                    <td className={`nr ${row.bal>0.01?"pos":row.bal<-0.01?"neg":"zer"}`}>{fmt(row.bal)}</td>
                     <td>
-                      {row.bal>0.01&&<span className="pill pill-green">↑ To return</span>}
-                      {row.bal<-0.01&&<span className="pill pill-red">↓ Over-withdrawn</span>}
+                      {row.bal>0.01&&<span className="pill pg">↑ To return</span>}
+                      {row.bal<-0.01&&<span className="pill pr">↓ Over-withdrawn</span>}
                       {Math.abs(row.bal)<=0.01&&<span className="pill" style={{background:"#111",color:"#333",border:"1px solid #1a1a1a"}}>Settled</span>}
                     </td>
                   </tr>
@@ -492,14 +384,14 @@ function App() {
             {result.profitPayouts.length===0
               ? <div style={{color:"#333",padding:32,textAlign:"center"}}>No profit payouts detected</div>
               : <table>
-                  <thead><tr><th>Client</th><th>PSP</th><th className="num">Amount</th><th>Date</th><th>Note</th></tr></thead>
+                  <thead><tr><th>Client</th><th>PSP</th><th className="nr">Amount</th><th>Date</th><th>Note</th></tr></thead>
                   <tbody>{result.profitPayouts.map((p,i)=>(
                     <tr key={i}>
                       <td style={{fontSize:11}}>{p.email}</td>
                       <td style={{color:"#fbbf24",fontSize:11}}>{p.psp}</td>
-                      <td className="num" style={{color:"#fbbf24"}}>{fmt(p.amount)}</td>
+                      <td className="nr" style={{color:"#fbbf24"}}>{fmt(p.amount)}</td>
                       <td style={{color:"#444",fontSize:10}}>{p.date}</td>
-                      <td><span className="pill pill-yellow">Profit Payout</span></td>
+                      <td><span className="pill py">Profit Payout</span></td>
                     </tr>
                   ))}</tbody>
                 </table>}
@@ -521,13 +413,13 @@ function App() {
             {result.unmatched.length===0
               ? <div style={{color:"#333",padding:32,textAlign:"center"}}>✓ All rows matched successfully</div>
               : <table>
-                  <thead><tr><th>ID</th><th>Client</th><th>Method</th><th className="num">Amount</th><th>Reason</th></tr></thead>
+                  <thead><tr><th>ID</th><th>Client</th><th>Method</th><th className="nr">Amount</th><th>Reason</th></tr></thead>
                   <tbody>{result.unmatched.map((u,i)=>(
                     <tr key={i}>
                       <td style={{color:"#333",fontSize:10}}>{u.id}</td>
                       <td style={{fontSize:11}}>{u.email}</td>
                       <td style={{color:"#f87171",fontSize:11}}>{u.method}</td>
-                      <td className="num">{fmt(u.value)}</td>
+                      <td className="nr">{fmt(u.value)}</td>
                       <td style={{color:"#555",fontSize:11}}>{u.reason}</td>
                     </tr>
                   ))}</tbody>
@@ -537,10 +429,9 @@ function App() {
       </>}
 
       {!result&&!loading&&(
-        <div style={{textAlign:"center",padding:"80px 0",color:"#1a1a2a"}}>
+        <div style={{textAlign:"center",padding:"60px 0",color:"#1a1a2a"}}>
           <div style={{fontSize:40,marginBottom:12}}>⬆</div>
-          <div style={{fontSize:11,letterSpacing:".12em",textTransform:"uppercase"}}>Upload main CSV to begin</div>
-          <div style={{fontSize:10,color:"#111",marginTop:6}}>Withdrawal sheet loads automatically</div>
+          <div style={{fontSize:11,letterSpacing:".12em",textTransform:"uppercase"}}>Upload both files to begin</div>
         </div>
       )}
     </div>
